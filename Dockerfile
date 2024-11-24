@@ -1,4 +1,4 @@
-# Gunakan image Python
+# Gunakan image Python slim
 FROM python:3.9-slim
 
 # Set environment variable
@@ -7,13 +7,13 @@ ENV PYTHONUNBUFFERED 1
 # Buat dan pindah ke direktori kerja
 WORKDIR /app
 
-# Install system dependencies for OpenCV
-RUN apt-get update && apt-get install -y libgl1-mesa-glx
+# Install system dependencies
+RUN apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0
 
-# Salin semua file ke dalam container
+# Salin semua file proyek ke container
 COPY . /app
 
-# Install dependency
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Ekspos port untuk FastAPI
