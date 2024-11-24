@@ -1,23 +1,23 @@
-# Gunakan base image Python yang mendukung TensorFlow
+# Gunakan base image Python yang ringan
 FROM python:3.9-slim
 
-# Install dependency sistem untuk OpenCV
-RUN apt-get update && apt-get install -y \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    && apt-get clean
-
-# Buat direktori aplikasi
+# Set working directory di dalam container
 WORKDIR /app
 
-# Salin requirements.txt dan install dependensi Python
-COPY requirements.txt requirements.txt
+# Salin file requirements.txt ke container
+COPY requirements.txt .
+
+# Install semua dependensi
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Salin semua kode aplikasi
+# Salin semua file aplikasi ke dalam container
 COPY . .
 
-# Jalankan aplikasi FastAPI dengan Uvicorn
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Expose port untuk aplikasi
+EXPOSE 8000
+
+# Tambahkan perintah chmod di Dockerfile
+RUN chmod +x start.sh
+
+# Command untuk menjalankan aplikasi
+CMD ["sh", "start.sh"]
