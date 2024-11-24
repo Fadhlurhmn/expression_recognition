@@ -7,6 +7,9 @@ ENV PYTHONUNBUFFERED 1
 # Buat dan pindah ke direktori kerja
 WORKDIR /app
 
+# Install system dependencies for OpenCV
+RUN apt-get update && apt-get install -y libgl1-mesa-glx
+
 # Salin semua file ke dalam container
 COPY . /app
 
