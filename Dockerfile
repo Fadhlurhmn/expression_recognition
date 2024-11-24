@@ -1,23 +1,23 @@
-# Gunakan image Python slim
+# Gunakan base image Python yang mendukung TensorFlow
 FROM python:3.9-slim
 
-# Set environment variable
-ENV PYTHONUNBUFFERED 1
+# Install dependency sistem untuk OpenCV
+RUN apt-get update && apt-get install -y \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    && apt-get clean
 
-# Buat dan pindah ke direktori kerja
+# Buat direktori aplikasi
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0
-
-# Salin semua file proyek ke container
-COPY . /app
-
-# Install Python dependencies
+# Salin requirements.txt dan install dependensi Python
+COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Ekspos port untuk FastAPI
-EXPOSE 8000
+# Salin semua kode aplikasi
+COPY . .
 
-# Jalankan server
+# Jalankan aplikasi FastAPI dengan Uvicorn
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
