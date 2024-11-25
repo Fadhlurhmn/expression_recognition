@@ -28,8 +28,8 @@ async def detect_expression(file: UploadFile = File(...)):
         except UnidentifiedImageError:
             return JSONResponse({"error": "Unsupported image format. Please upload a valid image."})
 
-        # Convert image to numpy array
-        image_np = np.array(image).astype(np.uint8)
+        # Convert image to numpy array with explicit dtype
+        image_np = np.array(image, dtype=np.uint8)
 
         # Detect faces using facenet-pytorch
         boxes, _ = detector.detect(image)
