@@ -1,3 +1,4 @@
+#new
 from fastapi import FastAPI, File, UploadFile
 from facenet_pytorch import MTCNN
 import tensorflow as tf
@@ -25,13 +26,13 @@ async def detect_expression(file: UploadFile = File(...)):
         contents = await file.read()
         image = Image.open(BytesIO(contents)).convert("RGB")
 
+        # Convert image to numpy array with correct dtype
+        image_np = np.array(image).astype(np.uint8)
+
         # Detect faces using facenet-pytorch
         boxes, _ = detector.detect(image)
         if boxes is None or len(boxes) == 0:
             return JSONResponse({"error": "No faces detected."})
-
-        # Convert image to numpy array for OpenCV processing
-        image_np = np.array(image)
 
         for box in boxes:
             x1, y1, x2, y2 = map(int, box)
@@ -51,10 +52,19 @@ async def detect_expression(file: UploadFile = File(...)):
 
             # Draw bounding box and emotion label on the original image
             cv2.rectangle(image_np, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(image_np, emotion, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+            cv2.putText(
+                image_np,
+                emotion,
+                (x1, y1 - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.9,
+                (0, 255, 0),
+                2,
+            )
 
-        # Convert the processed image back to JPEG format
-        _, buffer = cv2.imencode(".jpg", image_np)
+        # Encode the processed image into JPEG format
+        _, buffer = cv2.imencode(".jpg", cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
         return StreamingResponse(BytesIO(buffer.tobytes()), media_type="image/jpeg")
+
     except Exception as e:
         return JSONResponse({"error": str(e)})
