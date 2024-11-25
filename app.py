@@ -1,9 +1,8 @@
-#new
 from fastapi import FastAPI, File, UploadFile
 from facenet_pytorch import MTCNN
 import tensorflow as tf
 import numpy as np
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from io import BytesIO
 from fastapi.responses import JSONResponse, StreamingResponse
 import cv2
@@ -17,16 +16,19 @@ model = tf.keras.models.load_model("model/expression_detection.h5")
 emotion_labels = ["Angry", "Fear", "Happy", "Neutral", "Sad"]
 
 # Initialize MTCNN from facenet-pytorch
-detector = MTCNN(keep_all=True)  # `keep_all=True` to return all detected faces
+detector = MTCNN(keep_all=True)
 
 @app.post("/detect-expression/")
 async def detect_expression(file: UploadFile = File(...)):
     try:
-        # Read and preprocess image
+        # Read the image file and handle unsupported formats
         contents = await file.read()
-        image = Image.open(BytesIO(contents)).convert("RGB")
+        try:
+            image = Image.open(BytesIO(contents)).convert("RGB")
+        except UnidentifiedImageError:
+            return JSONResponse({"error": "Unsupported image format. Please upload a valid image."})
 
-        # Convert image to numpy array with correct dtype
+        # Convert image to numpy array
         image_np = np.array(image).astype(np.uint8)
 
         # Detect faces using facenet-pytorch
