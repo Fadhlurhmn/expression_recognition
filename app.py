@@ -70,3 +70,47 @@ async def detect_expression(file: UploadFile = File(...)):
 
     except Exception as e:
         return JSONResponse({"error": str(e)})
+
+@app.post("/get-expression-label/")
+async def get_expression_label(file: UploadFile = File(...)):
+    try:
+        # Read the image file and handle unsupported formats
+        contents = await file.read()
+        try:
+            image = Image.open(BytesIO(contents)).convert("RGB")
+        except UnidentifiedImageError:
+            return JSONResponse({"error": "Unsupported image format. Please upload a valid image."})
+
+        # Convert image to numpy array
+        image_np = np.array(image, dtype=np.uint8)
+
+        # Detect faces using facenet-pytorch
+        boxes, _ = detector.detect(image)
+        if boxes is None or len(boxes) == 0:
+            return JSONResponse({"error": "No faces detected."})
+
+        expression_results = []
+
+        for box in boxes:
+            x1, y1, x2, y2 = map(int, box)
+
+            # Crop the face
+            face = image_np[y1:y2, x1:x2]
+
+            # Preprocess the face for TensorFlow model
+            face_gray = cv2.cvtColor(face, cv2.COLOR_RGB2GRAY)
+            face_resized = cv2.resize(face_gray, (48, 48))
+            face_normalized = face_resized / 255.0
+            face_reshaped = np.reshape(face_normalized, (1, 48, 48, 1))
+
+            # Predict expression
+            predictions = model.predict(face_reshaped)
+            emotion = emotion_labels[np.argmax(predictions)]
+
+            # Append only the detected emotion
+            expression_results.append(emotion)
+
+        return JSONResponse({"emotions": expression_results})
+
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
